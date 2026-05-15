@@ -12,8 +12,24 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+func formatDate(dateStr string) string {
+	t, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		return dateStr
+	}
+	return t.Format("02-01-2006")
+}
+
+func formatTimestamp(ts string) string {
+	t, err := time.Parse("2006-01-02 15:04:05", ts)
+	if err != nil {
+		return ts
+	}
+	return t.Format("02-01-2006 15:04:05")
+}
+
 func renderClientRow(c Client) string {
-	datesHtml := fmt.Sprintf("Install: %s<br>Start: %s<br>Due: %s", c.InstallDate, c.StartDate, c.DueDate)
+	datesHtml := fmt.Sprintf("Install: %s<br>Start: %s<br>Due: %s", formatDate(c.InstallDate), formatDate(c.StartDate), formatDate(c.DueDate))
 
 	// Due date highlight
 	rowStyle := ""
@@ -221,7 +237,7 @@ func setupHandlers(mux *http.ServeMux, db *sql.DB) {
 			sb.WriteString("<tr><td colspan='3'>No history available</td></tr>")
 		} else {
 			for _, rec := range recs {
-				sb.WriteString(fmt.Sprintf("<tr><td>%s</td><td>%s to %s</td><td>%s to %s</td></tr>", rec.Recorded, rec.PrevStart, rec.PrevDue, rec.NewStart, rec.NewDue))
+				sb.WriteString(fmt.Sprintf("<tr><td>%s</td><td>%s to %s</td><td>%s to %s</td></tr>", formatTimestamp(rec.Recorded), formatDate(rec.PrevStart), formatDate(rec.PrevDue), formatDate(rec.NewStart), formatDate(rec.NewDue)))
 			}
 		}
 		sb.WriteString("</tbody></table><br><button type='button' class='secondary' onclick=\"document.getElementById('edit-dialog').close()\">Close</button>")
@@ -238,7 +254,7 @@ func setupHandlers(mux *http.ServeMux, db *sql.DB) {
 			sb.WriteString("<tr><td colspan='2'>No edits recorded</td></tr>")
 		} else {
 			for _, rec := range recs {
-				sb.WriteString(fmt.Sprintf("<tr><td style='white-space:nowrap'>%s</td><td style='font-size:0.8rem; word-break:break-all'>%s</td></tr>", rec.EditedAt, rec.Details))
+				sb.WriteString(fmt.Sprintf("<tr><td style='white-space:nowrap'>%s</td><td style='font-size:0.8rem; word-break:break-all'>%s</td></tr>", formatTimestamp(rec.EditedAt), rec.Details))
 			}
 		}
 		sb.WriteString("</tbody></table><br><button type='button' class='secondary' onclick=\"document.getElementById('edit-dialog').close()\">Close</button>")
@@ -346,7 +362,7 @@ func setupHandlers(mux *http.ServeMux, db *sql.DB) {
 
 			sumTotalDue += c.TotalDue
 
-			colData := []interface{}{c.ID, c.Name, c.IPAddress, c.Users, c.ChargesPerUser, c.PayFrequency, c.AdditionalCharges, c.InstallDate, c.TotalDue, c.StartDate, c.DueDate, c.LastPayment, c.Remarks}
+			colData := []interface{}{c.ID, c.Name, c.IPAddress, c.Users, c.ChargesPerUser, c.PayFrequency, c.AdditionalCharges, formatDate(c.InstallDate), c.TotalDue, formatDate(c.StartDate), formatDate(c.DueDate), c.LastPayment, c.Remarks}
 			for i, val := range colData {
 				cell, _ := excelize.CoordinatesToCellName(i+1, rowIdx)
 				f.SetCellValue(sheet, cell, val)
